@@ -5,8 +5,7 @@ import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { ActivityIndicator } from 'react-native';
 import { BottomPlayer } from './components/bottomPlayer';
 
-
-const BACKEND_URL = 'http://192.168.1.33:8080';
+const BACKEND_URL = 'http://192.168.1.56:8080';
 
 interface Song {
   id: string;
@@ -26,10 +25,11 @@ interface Song {
 }
 
 export default function App() {
-  const { playSound, pauseSound, playbackStatus } = useAudioPlayer();
+  const { playSound, pauseSound, stopSound, seekTo, playbackStatus } = useAudioPlayer();
   const [songData, setSongData] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  const [loadingSongId, setLoadingSongId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSongs = async () => {
@@ -74,45 +74,57 @@ export default function App() {
     return () => clearInterval(refreshInterval);
   }, []);
 
-  const handleSongSelect = (song: Song) => {
-    if (song.signedUrl) {
-      setSelectedSong(song);
-      playSound(song.signedUrl);
+  const handleSongSelect = async (song: Song) => {
+    if (song.signedUrl && !playbackStatus.isLoading) {
+      if (selectedSong?.id === song.id && playbackStatus.isPlaying) {
+        pauseSound();
+      } else {
+        stopSound();
+        setSelectedSong(song);
+        setLoadingSongId(song.id); 
+        await playSound(song.signedUrl);
+        setLoadingSongId(null); 
+      }
     }
   };
+  
 
   return (
     <SafeAreaView style={{ flex: 1, marginTop: StatusBar.currentHeight || 0 }}>
-    {isLoading ? (
-      <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: 'center' }} />
-    ) : (
-      <>
-        <FlatList
-          data={songData}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <SongCard
-              title={item.title}
-              artist={item.artistName}
-              coverUrl={item.coverUrl}
-              onPress={() => handleSongSelect(item)}
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: 'center' }} />
+      ) : (
+        <>
+          <FlatList
+            data={songData}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <SongCard
+                title={item.title}
+                artist={item.artistName}
+                coverUrl={item.coverUrl}
+                onPress={() => handleSongSelect(item)}
+              />
+            )}
+            contentContainerStyle={{ paddingBottom: selectedSong ? 100 : 0 }}
+          />
+          {selectedSong && (
+            <BottomPlayer
+              title={selectedSong.title}
+              artist={selectedSong.artistName}
+              coverUrl={selectedSong.coverUrl}
+              isPlaying={playbackStatus.isPlaying}
+              isLoading={playbackStatus.isLoading}
+              position={playbackStatus.position}
+              duration={playbackStatus.duration}
+              onPlay={() => handleSongSelect(selectedSong)}
+              onPause={pauseSound}
+              onSeek={seekTo}
+              isBusy={loadingSongId === selectedSong?.id}
             />
           )}
-          contentContainerStyle={{ paddingBottom: selectedSong ? 100 : 0 }} // to avoid overlap
-        />
-
-        {selectedSong && (
-          <BottomPlayer
-            title={selectedSong.title}
-            artist={selectedSong.artistName}
-            coverUrl={selectedSong.coverUrl}
-            isPlaying={playbackStatus.isPlaying}
-            onPlay={() => playSound(selectedSong.signedUrl!)}
-            onPause={pauseSound}
-          />
-        )}
-      </>
-    )}
-  </SafeAreaView>
+        </>
+      )}
+    </SafeAreaView>
   );
 }

@@ -10,9 +10,10 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-community/slider": "^4.5.7",
     "expo": "~53.0.9",
     "expo-audio": "~0.4.5",
-    "expo-av": "~15.1.4",
+    "expo-av": "~15.1.5",
     "expo-status-bar": "~2.2.3",
     "firebase": "^11.8.1",
     "react": "19.0.0",
