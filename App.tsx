@@ -5,7 +5,9 @@ import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { ActivityIndicator } from 'react-native';
 import { BottomPlayer } from './components/bottomPlayer';
 
-const BACKEND_URL = 'http://192.168.1.56:8080';
+// const BACKEND_URL = 'http://192.168.1.56:8080';
+const BACKEND_URL = 'http://192.168.0.182:8080';
+// const BACKEND_URL = 'http://10.197.83.189:8080';
 
 interface Song {
   id: string;
